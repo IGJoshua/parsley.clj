@@ -21,7 +21,7 @@
   (vec (.getBytes ^String s
                   ^String (convert-string-encoding options))))
 
-(defn- my-sequence
+(defn- sequence*
   [xf coll]
   (let [rf (xf (fn [_ v] v))
         f (fn f [coll]
@@ -41,7 +41,7 @@
                  (map-indexed vector)
                  (filter #(= (second %) delimiter-bytes))
                  (map first))
-        delimiter-index (first (my-sequence xf bytes))
+        delimiter-index (first (sequence* xf bytes))
         new-bytes (take (or delimiter-index 0)
                         bytes)]
     (if (nil? delimiter-index)
