@@ -3,6 +3,7 @@
   (:require [mfiano.parsley.transformers :as tr]
             [net.cgrand.xforms :as xf])
   (:import [java.io InputStreamReader]
+           [java.nio ByteBuffer]
            [com.tomgibara.bits Bits BitReader BitStore EndOfBitStreamException]))
 
 (defn- convert-string-encoding
@@ -91,6 +92,18 @@
                             (* (count (get-string-bytes delimiter options)) 8)))
     ret))
 
+(defn- read-float
+  [^BitReader reader options]
+  (let [bytes (read-bytes reader (assoc options :size 32))
+        buffer (ByteBuffer/wrap bytes)]
+    (.getFloat buffer)))
+
+(defn- read-double
+  [^BitReader reader options]
+  (let [bytes (read-bytes reader (assoc options :size 64))
+        buffer (ByteBuffer/wrap bytes)]
+    (.getDouble buffer)))
+
 (defn read
   [data-type
    {:keys [reader spec]}
@@ -103,4 +116,6 @@
       :bytes (read-bytes reader options)
       :int (tr/bytes->int (read-bytes reader options))
       :uint (tr/bytes->uint (read-bytes reader options))
-      :string (read-string reader options))))
+      :string (read-string reader options)
+      :float (read-float reader options)
+      :double (read-double reader options))))
