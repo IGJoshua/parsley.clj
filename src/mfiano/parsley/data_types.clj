@@ -1,6 +1,7 @@
 (ns mfiano.parsley.data-types
   (:refer-clojure :exclude [read read-string])
-  (:require [mfiano.parsley.transformers :as tr])
+  (:require [mfiano.parsley.transformers :as tr]
+            [net.cgrand.xforms :as xf])
   (:import [java.io InputStreamReader]
            [com.tomgibara.bits Bits BitReader BitStore]))
 
@@ -22,14 +23,17 @@
 
 (defn- get-delimited-string-bytes
   [bytes {:keys [delimiter] :as options}]
-  (let [delimiter-bytes (get-string-bytes (or delimiter "") options)]
-    (->> (partition (count delimiter-bytes) 1 bytes)
-         (map-indexed vector)
-         (filter #(= (second %) delimiter-bytes))
-         (map first)
-         (#(or (first %) (count bytes)))
-         (subvec (vec bytes) 0)
-         (#(if (empty? %) bytes (byte-array %))))))
+  (let [delimiter-bytes (get-string-bytes (or delimiter "") options)
+        xf (comp (xf/partition (count delimiter-bytes) 1)
+                 (map-indexed vector)
+                 (filter #(= (second %) delimiter-bytes))
+                 (map first))
+        delimiter-index (first (sequence xf bytes))
+        new-bytes (subvec (vec bytes) 0 (or delimiter-index
+                                            (count bytes)))]
+    (if (empty? new-bytes)
+      bytes
+      (byte-array new-bytes))))
 
 (defn- read-boolean
   [^BitReader reader]
