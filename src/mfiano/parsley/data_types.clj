@@ -73,18 +73,22 @@
                       (pos? remaining))
               (lazy-seq (try (cons (unchecked-byte (.read reader 8))
                                    (f (and remaining
-                                           (- remaining 8))))
+                                           (dec remaining))))
                              (catch EndOfBitStreamException e
                                nil)))))]
-    (f size)))
+    (f (when size
+         (int (/ size 8))))))
 
 (defn read-string
-  [^BitReader reader {:keys [delimiter] :as options}]
+  [^BitReader reader {:keys [delimiter size] :as options}]
   (let [loc (.getPosition reader)
         bytes (bytes-seq reader options)
-        ret (String. ^bytes (get-delimited-string-bytes bytes options)
+        delimited-bytes ^bytes (get-delimited-string-bytes bytes options)
+        ret (String. delimited-bytes
                      ^String (convert-string-encoding options))]
-    (.setPosition reader (+ loc (count ret) (count delimiter)))
+    (.setPosition reader (+ loc
+                            (* (count delimited-bytes) 8)
+                            (* (count (get-string-bytes delimiter options)) 8)))
     ret))
 
 (defn read
