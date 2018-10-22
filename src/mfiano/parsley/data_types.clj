@@ -45,7 +45,9 @@
         delimiter-index (first (my-sequence xf bytes))
         new-bytes (take (or delimiter-index 0)
                         bytes)]
-    (byte-array new-bytes)))
+    (if (nil? delimiter-index)
+      (byte-array bytes)
+      (byte-array new-bytes))))
 
 (defn- read-boolean
   [^BitReader reader]
@@ -74,7 +76,6 @@
                                    (f (and remaining
                                            (- remaining 8))))
                              (catch Exception e
-                               (println (clojure.stacktrace/print-throwable e))
                                nil)))
               nil))]
     (f size)))
@@ -82,7 +83,7 @@
 (defn read-string
   [^BitReader reader {:keys [delimiter] :as options}]
   (let [loc (.getPosition reader)
-        bytes (bytes-seq reader (assoc options :endian :be))
+        bytes (bytes-seq reader options)
         ret (String. ^bytes (get-delimited-string-bytes bytes options)
                      ^String (convert-string-encoding options))]
     (.setPosition reader (+ loc (count ret) (count delimiter)))
