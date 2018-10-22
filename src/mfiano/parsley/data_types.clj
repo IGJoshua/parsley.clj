@@ -26,13 +26,12 @@
   (let [rf (xf (fn [_ v] v))
         f (fn f [coll]
             (lazy-seq (loop [coll coll]
-                        (if (seq coll)
+                        (when (seq coll)
                           (if-let [res (rf nil (first coll))]
                             (if (reduced? res)
                               (cons @res nil)
                               (cons res (f (rest coll))))
-                            (recur (rest coll)))
-                          nil))))]
+                            (recur (rest coll)))))))]
     (f coll)))
 
 (defn- get-delimited-string-bytes
@@ -70,14 +69,13 @@
 (defn- bytes-seq
   [^BitReader reader {:keys [size]}]
   (letfn [(f [remaining]
-            (if (or (nil? remaining)
-                    (pos? remaining))
+            (when (or (nil? remaining)
+                      (pos? remaining))
               (lazy-seq (try (cons (unchecked-byte (.read reader 8))
                                    (f (and remaining
                                            (- remaining 8))))
                              (catch Exception e
-                               nil)))
-              nil))]
+                               nil)))))]
     (f size)))
 
 (defn read-string
