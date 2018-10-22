@@ -1,3 +1,4 @@
 {:extra-paths ["resources"]
  :deps {org.clojure/clojure {:mvn/version "1.9.0"}
-        com.tomgibara.bits/bits {:mvn/version "2.1.0"}}}
+        com.tomgibara.bits/bits {:mvn/version "2.1.0"}
+        net.cgrand/xforms {:mvn/version "0.18.2"}}}
