@@ -13,7 +13,7 @@
     :utf16 (if (= endian :be)
              "UTF-16BE"
              "UTF-16LE")
-    (throw (UnsupportedOperationException. (format "Invalid string encoding %s" encoding)))))
+    (throw (UnsupportedOperationException. (format "Invalid string encoding: %s" encoding)))))
 
 (defn- get-string-bytes
   [s options]
@@ -38,7 +38,6 @@
 (defn- read-bits
   [^BitReader reader {:keys [size]}]
   (let [bits (.readBigInt reader size)]
-    (.read reader (bit-and (- size) 7))
     bits))
 
 (defn- read-bytes
