@@ -21,6 +21,20 @@
   (vec (.getBytes ^String s
                   ^String (convert-string-encoding options))))
 
+(defn- my-sequence
+  [xf coll]
+  (let [rf (xf (fn [_ v] v))
+        f (fn f [coll]
+            (lazy-seq (loop [coll coll]
+                        (if (seq coll)
+                          (if-let [res (rf nil (first coll))]
+                            (if (reduced? res)
+                              (cons @res nil)
+                              (cons res (f (rest coll))))
+                            (recur (rest coll)))
+                          nil))))]
+    (f coll)))
+
 (defn- get-delimited-string-bytes
   [bytes {:keys [delimiter] :as options}]
   (let [delimiter-bytes (get-string-bytes (or delimiter "") options)
@@ -28,12 +42,10 @@
                  (map-indexed vector)
                  (filter #(= (second %) delimiter-bytes))
                  (map first))
-        delimiter-index (first (sequence xf bytes))
-        new-bytes (subvec (vec bytes) 0 (or delimiter-index
-                                            (count bytes)))]
-    (if (empty? new-bytes)
-      bytes
-      (byte-array new-bytes))))
+        delimiter-index (first (my-sequence xf bytes))
+        new-bytes (take (or delimiter-index 0)
+                        bytes)]
+    (byte-array new-bytes)))
 
 (defn- read-boolean
   [^BitReader reader]
