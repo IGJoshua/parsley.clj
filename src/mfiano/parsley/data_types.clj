@@ -3,7 +3,7 @@
   (:require [mfiano.parsley.transformers :as tr]
             [net.cgrand.xforms :as xf])
   (:import [java.io InputStreamReader]
-           [com.tomgibara.bits Bits BitReader BitStore]))
+           [com.tomgibara.bits Bits BitReader BitStore EndOfBitStreamException]))
 
 (defn- convert-string-encoding
   [{:keys [encoding endian]}]
@@ -74,7 +74,7 @@
               (lazy-seq (try (cons (unchecked-byte (.read reader 8))
                                    (f (and remaining
                                            (- remaining 8))))
-                             (catch Exception e
+                             (catch EndOfBitStreamException e
                                nil)))))]
     (f size)))
 
