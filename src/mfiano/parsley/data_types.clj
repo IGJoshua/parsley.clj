@@ -53,11 +53,28 @@
         :be bytes
         :le (doto bytes tr/bytes-reverse!)))))
 
+(defn- bytes-seq
+  [^BitReader reader {:keys [size]}]
+  (letfn [(f [remaining]
+            (if (or (nil? remaining)
+                    (pos? remaining))
+              (lazy-seq (try (cons (unchecked-byte (.read reader 8))
+                                   (f (and remaining
+                                           (- remaining 8))))
+                             (catch Exception e
+                               (println (clojure.stacktrace/print-throwable e))
+                               nil)))
+              nil))]
+    (f size)))
+
 (defn read-string
-  [^BitReader reader options]
-  (let [bytes (read-bytes reader (assoc options :endian :be))]
-    (String. ^bytes (get-delimited-string-bytes bytes options)
-             ^String (convert-string-encoding options))))
+  [^BitReader reader {:keys [delimiter] :as options}]
+  (let [loc (.getPosition reader)
+        bytes (bytes-seq reader (assoc options :endian :be))
+        ret (String. ^bytes (get-delimited-string-bytes bytes options)
+                     ^String (convert-string-encoding options))]
+    (.setPosition reader (+ loc (count ret) (count delimiter)))
+    ret))
 
 (defn read
   [data-type
