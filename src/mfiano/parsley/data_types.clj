@@ -6,6 +6,11 @@
            [java.nio ByteBuffer]
            [com.tomgibara.bits Bits BitReader BitStore EndOfBitStreamException]))
 
+(def ^:private default-options
+  {:endian :be
+   :encoding :ascii
+   :delimiter ""})
+
 (defn- convert-string-encoding
   [{:keys [encoding endian]}]
   (case encoding
@@ -37,7 +42,7 @@
 
 (defn- get-delimited-string-bytes
   [bytes {:keys [delimiter] :as options}]
-  (let [delimiter-bytes (get-string-bytes (or delimiter "") options)
+  (let [delimiter-bytes (get-string-bytes delimiter options)
         xf (comp (xf/partition (count delimiter-bytes) 1)
                  (map-indexed vector)
                  (filter #(= (second %) delimiter-bytes))
@@ -82,6 +87,8 @@
 
 (defn- read-string
   [^BitReader reader {:keys [delimiter size] :as options}]
+  (assert (or (not= delimiter "") size)
+          "String fields require either a delimiter or size.")
   (let [loc (.getPosition reader)
         bytes (bytes-seq reader options)
         delimited-bytes ^bytes (get-delimited-string-bytes bytes options)
@@ -108,8 +115,8 @@
   [data-type
    {:keys [reader spec]}
    & {:as options}]
-  (let [defaults (select-keys spec [:endian :encoding])
-        options (merge defaults options)]
+  (let [spec-defaults (select-keys spec [:endian :encoding])
+        options (merge default-options spec-defaults options)]
     (case data-type
       :boolean (read-boolean reader)
       :bits (read-bits reader options)
