@@ -17,23 +17,23 @@
              "UTF-16LE")
     (throw (UnsupportedOperationException. (format "Invalid string encoding: %s" encoding)))))
 
-(defn- get-string-bytes
-  [s options]
-  (vec (.getBytes ^String s
-                  ^String (convert-string-encoding options))))
-
 (defn- sequence*
   [xf coll]
   (let [rf (xf (fn [_ v] v))
         f (fn f [coll]
-            (lazy-seq (loop [coll coll]
-                        (when (seq coll)
-                          (if-let [res (rf nil (first coll))]
-                            (if (reduced? res)
-                              (cons @res nil)
-                              (cons res (f (rest coll))))
-                            (recur (rest coll)))))))]
+            (lazy-seq
+             (loop [coll coll]
+               (when (seq coll)
+                 (if-let [res (rf nil (first coll))]
+                   (if (reduced? res)
+                     (cons @res nil)
+                     (cons res (f (rest coll))))
+                   (recur (rest coll)))))))]
     (f coll)))
+
+(defn- get-string-bytes
+  [s options]
+  (vec (.getBytes ^String s ^String (convert-string-encoding options))))
 
 (defn- get-delimited-string-bytes
   [bytes {:keys [delimiter] :as options}]
@@ -43,8 +43,7 @@
                  (filter #(= (second %) delimiter-bytes))
                  (map first))
         delimiter-index (first (sequence* xf bytes))
-        new-bytes (take (or delimiter-index 0)
-                        bytes)]
+        new-bytes (take (or delimiter-index 0) bytes)]
     (if (nil? delimiter-index)
       (byte-array bytes)
       (byte-array new-bytes))))
