@@ -49,6 +49,19 @@
       (byte-array bytes)
       (byte-array new-bytes))))
 
+(defn- bytes-seq
+  [^BitReader reader {:keys [size]}]
+  (letfn [(f [remaining]
+            (when (or (nil? remaining)
+                      (pos? remaining))
+              (lazy-seq (try (cons (unchecked-byte (.read reader 8))
+                                   (f (and remaining
+                                           (dec remaining))))
+                             (catch EndOfBitStreamException e
+                               nil)))))]
+    (f (when size
+         (int (/ size 8))))))
+
 (defn- read-boolean
   [^BitReader reader]
   (.readBoolean reader))
@@ -67,20 +80,7 @@
         :be bytes
         :le (doto bytes tr/bytes-reverse!)))))
 
-(defn- bytes-seq
-  [^BitReader reader {:keys [size]}]
-  (letfn [(f [remaining]
-            (when (or (nil? remaining)
-                      (pos? remaining))
-              (lazy-seq (try (cons (unchecked-byte (.read reader 8))
-                                   (f (and remaining
-                                           (dec remaining))))
-                             (catch EndOfBitStreamException e
-                               nil)))))]
-    (f (when size
-         (int (/ size 8))))))
-
-(defn read-string
+(defn- read-string
   [^BitReader reader {:keys [delimiter size] :as options}]
   (let [loc (.getPosition reader)
         bytes (bytes-seq reader options)
