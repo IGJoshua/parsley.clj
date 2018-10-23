@@ -68,8 +68,9 @@
 
 (defn- read-bits
   [^BitReader reader {:keys [size]}]
-  (let [bits (.readBigInt reader size)]
-    bits))
+  (if (<= size 32)
+    (.readLong reader size)
+    (.readBigInt reader size)))
 
 (defn- read-bytes
   [^BitReader reader {:keys [size endian]}]

@@ -12,11 +12,11 @@
 
 (defn bytes->uint
   [^bytes bytes]
-  (bigint (BigInteger. 1 bytes)))
+  (BigInteger. 1 bytes))
 
 (defn bytes->int
   [bytes]
-  (.longValue (bigint bytes)))
+  (BigInteger. bytes))
 
 (defn bytes->hex-string
   [bytes]
